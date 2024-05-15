@@ -1,0 +1,106 @@
+CROWDFUNDING ANALYSIS SQL
+
+use crowdfunding;
+select*from projects;
+select*from crowdfunding_category;
+
+
+SELECT created_at , from_unixtime(created_at) FROM projects;
+
+-- 1
+
+select state , count(ProjectID) as Total_Projects from projects
+group by state
+order by Total_Projects desc; 
+
+-- 2
+select country , count(ProjectID) as Total_Projects from projects
+group by country
+order by Total_Projects desc; 
+
+-- 3 
+
+select crowdfunding_category.name , count(ProjectID) as Total_Projects from crowdfunding_category 
+inner join projects on crowdfunding_category.id = projects.category_id
+group by crowdfunding_category.name
+order by count(ProjectID) desc; 
+
+-- 4 
+
+SELECT year(from_unixtime(created_at)) as year , count(ProjectID) FROM projects
+group by year
+order by year;
+
+SELECT monthname(from_unixtime(created_at)) as Month , count(ProjectID) FROM projects
+group by monthname(from_unixtime(created_at));
+
+SELECT Quarter(from_unixtime(created_at)) as Quarter , count(ProjectID) as Total_Projects FROM projects
+group by Quarter(from_unixtime(created_at))
+order by quarter(from_unixtime(created_at));
+
+-- Successful Projects
+-- Amount Raised
+select name , sum(goal*static_usd_rate) as Amount_raised from projects
+where state = 'successful'
+group by name
+order by Amount_raised desc;
+
+-- Backers count
+
+select name , sum(Backers_count) as number_of_Backers from projects
+where state = 'successful'
+group by name
+order by number_of_Backers desc;
+
+
+-- TOP
+select name , sum(goal*static_usd_rate) as Amount_raised from projects
+where state = 'successful'
+group by name
+order by sum(goal*static_usd_rate) desc
+limit 10;
+
+select name , sum(Backers_count) from projects
+where state = 'successful'
+group by name
+order by sum(Backers_count) desc
+limit 10;
+
+select avg(datediff(from_unixtime(successful_at) , from_unixtime(created_at))) as Averege_no_of_days from projects
+where state = 'successful';
+
+
+-- Percentage
+
+
+select concat(round(Count(Case When state = "successful" then 1 End)*100/ Count(*),2), "%") 
+As Percentage_Overall_Successful
+from projects;
+
+select crowdfunding_category.name , concat(round(Count(Case When state = "successful" then 1 End)*100/ Count(*),2), "%") 
+As Percentage_Overall_Successful 
+from projects
+inner join crowdfunding_category on crowdfunding_category.id = projects.category_id
+group by crowdfunding_category.name
+order by Percentage_Overall_Successful;
+
+select year(from_unixtime(created_at)) as year , concat(round(Count(Case When state = "successful" then 1 End)*100/ Count(*),2), "%") 
+As Percentage_Overall_Successful
+from projects
+group by year;
+
+select monthname(from_unixtime(created_at)) as month , concat(round(Count(Case When state = "successful" then 1 End)*100/ Count(*),2), "%") 
+As Percentage_Overall_Successful
+from projects
+group by month;
+
+select (case when (goal* static_usd_rate) between 0 and 5000 then '0-5K'
+             when (goal* static_usd_rate) between 5000 and 50000 then '5K-50K'
+             when (goal* static_usd_rate) between 50000 and 100000 then '50K-1L'
+             when (goal* static_usd_rate) between 100000 and 200000 then '1L-2L'
+             when (goal* static_usd_rate)>200000 then 'Above 2L'
+        end) as Goal_Bins  , concat(round(Count(Case When state = "successful" then 1 End)*100/ Count(*),2), "%") 
+As Percentage_Overall_Successful
+from projects
+group by Goal_Bins;
+
